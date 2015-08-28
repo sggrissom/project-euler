@@ -1,21 +1,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
-#define internal static
-#define global static
-#define bool32 int32_t
-#define int32 int32_t
-#define int64 int64_t
-#define uint64 uint64_t
-#define real32 float
-
-#if DEBUG
-#define assert(expression) if(!(expression)) {*(int *)0 = 0;}
-#else
-#define assert(expression)
-#endif
+#include "../sgg/sgg.h"
 
 #ifndef WIN32
 #define LONG "%lld"
@@ -23,66 +10,138 @@
 #define LONG "%I64u"
 #endif
 
-#include "bignum.c"
-
-internal int32 addDigits(uint64 number)
+internal u32
+sg_atoi(const char *s)
 {
-    int32 sum = 0;
-    int32 digit;
+    u32 result;
+
+    while(*s)
+    {
+        result <<= 1;
+        result += (result << 2);
+        result += (*s++ & 0x0f);
+    }
+
+    return result;
+}
+
+internal u32
+CharValue(char character)
+{
+    return character - 'a' + 1;
+}
+
+internal u32
+GetStringValue(const char *str)
+{
+    u32 sum = 0;
     
-    printf("num: " LONG , number);
-
-    while(number)
+    while(*str)
     {
-        digit = number % 10;
-        sum += digit;
-        number /= 10;
-    }
-
-    printf(", sum: %d\n", sum);
-
-    return sum;
-}
-
-internal int32 sumBigintDigits(bigint *big)
-{
-    int32 sum = 0;
-    for(int32 i=0;
-        i < big->size;
-        ++i)
-    {
-        sum += addDigits(getPart(big, i));
+        sum += CharValue(*str++);
     }
 
     return sum;
 }
 
-int32 main(int32 argc, char *argv[])
+internal b32
+IsStringLower(char *a, char *b)
 {
-    uint64 x = 65, y = 1;
+    b32 Result = 0;
+
+    char CharA = *a++;
+    char CharB = *b++;
+
+    while(CharA == CharB)
+    {
+        CharA = *a++;
+        CharB = *b++;
+    }
+
+    if(CharB && CharB < CharA)
+    {
+        Result = 1;
+    }
+
+    return Result;
+}
+
+internal void
+SlowSortStrings(char **StringArray, u32 ArraySize)
+{
+    for(u32 SortedNumber = 0;
+        SortedNumber < ArraySize;
+        ++SortedNumber)
+    {
+        char *MinString = *(StringArray + SortedNumber);
+        u32 MinStringIndex = SortedNumber;
+        for(u32 SearchIndex = SortedNumber + 1;
+            SearchIndex < ArraySize;
+            ++SearchIndex)
+        {
+            if(IsStringLower(MinString, *(StringArray + SearchIndex)))
+            {
+                MinString = *(StringArray + SearchIndex);
+                MinStringIndex = SearchIndex;
+            }
+
+        }
+
+        char *temp = *(StringArray + SortedNumber);
+        *(StringArray + SortedNumber) = MinString;
+        *(StringArray + MinStringIndex) = temp;
+    }
+}
+
+s32 main(s32 argc, char *argv[])
+{
+    char *x = "1", *y = "2";
     if (argc == 2)
     {
-        x = atoi(argv[1]);
+        x = argv[1];
     } else if (argc == 3) {
-        x = atoi(argv[1]);
-        y = atoi(argv[2]);
+        x = argv[1];
+        y = argv[2];
     }
 
-    init();
+    printf("open\n"); 
+    FILE *file = fopen("names.txt", "r");
 
-    bigint sum = {0};
-    createBigint(&sum, 2);
+    char *str = 0;
+    char **strings = 0;
 
-    for(int32 i=1;
-        i < x;
-        ++i)
+    if(file)
     {
-        addTo(&sum, &sum);
+        char character = fgetc(file);
+    
+        while(character != EOF)
+        {
+            while(character != '\"' && character != ',')
+            {
+                buffer_push(str, character);
+                character = fgetc(file);
+            }
+            if(str)
+            {
+                buffer_push(str, '\0');
+                buffer_push(strings, str);
+                str = 0;
+            }
+            character = fgetc(file);
+        }
+
+        fclose(file);
+
     }
 
-    printBigint(&sum);
-
-    // printf("answer: %d", sumBigintDigits(&sum));
-
+    SlowSortStrings(strings, buffer_count(strings));
+    
+    for(u32 StringIndex = 0;
+        StringIndex < buffer_count(strings);
+        ++StringIndex)
+    {
+        printf("%s\n", strings[StringIndex]);
+    }
+    
     return 0;
 }

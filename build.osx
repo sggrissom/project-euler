@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd bin
-clang ../problem.c
+clang ../problem.c -I~/sgg

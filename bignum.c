@@ -1,31 +1,31 @@
 
 #define maxDigits 19
 #define intDigits 50
-#define ZEROLONG "%019I64u"
-#define lowMax 9999999999999999999
+#define ZEROLONG "%019lld"
+#define lowMax 9999999999999999999U
 
 typedef struct {
-    int32 size;
-    uint64 *parts;
+    s32 size;
+    u64 *parts;
 } bigint;
 
-internal void putInPart(bigint *big, uint64 num, int32 idx)
+internal void putInPart(bigint *big, u64 num, s32 idx)
 {
-    assert(idx < big->size && idx >= 0);
+    Assert(idx < big->size && idx >= 0);
     *(big->parts + idx) = num;
 }
 
-internal uint64 getPart(bigint *big, int32 idx)
+internal u64 getPart(bigint *big, s32 idx)
 {
-    assert(idx < big->size && idx >= 0);
+    Assert(idx < big->size && idx >= 0);
     return *(big->parts + idx);
 }
 
-internal int64 getInt(char* s, int32 digits)
+internal s64 getInt(char* s, s32 digits)
 {
     char* buffer = malloc(sizeof(char) * (digits + 1));
     char* temp = buffer;
-    bool32 began = 0;
+    b32 began = 0;
     for (int i = 0;
          i<digits;
          ++i)
@@ -47,7 +47,7 @@ internal int64 getInt(char* s, int32 digits)
     }
     *temp = '\0';
 
-    int64 result = strtoull(buffer, 0, 10);
+    s64 result = strtoull(buffer, 0, 10);
 
     free(buffer);
     
@@ -56,28 +56,28 @@ internal int64 getInt(char* s, int32 digits)
 
 internal void createBigintFromString(bigint* big, char* string)
 {
-    int32 digits = intDigits - 2*maxDigits;
+    s32 digits = intDigits - 2*maxDigits;
     putInPart(big, getInt(string, digits), 2);
     putInPart(big, getInt(string + digits, maxDigits), 1);
     putInPart(big, getInt(string + digits + maxDigits, maxDigits), 0);
 }
 
-internal void createBigint(bigint *big, uint64 num)
+internal void createBigint(bigint *big, u64 num)
 {
     big->size = 1;
-    big->parts = malloc(sizeof(uint64) * big->size);
+    big->parts = malloc(sizeof(u64) * big->size);
     putInPart(big, num, 0);
 }
 
 internal void expandBigint(bigint *big)
 {
     ++(big->size);
-    uint64 *temp = realloc(big->parts, sizeof(uint64) * big->size);
+    u64 *temp = realloc(big->parts, sizeof(u64) * big->size);
     if(temp)
     {
         big->parts = temp;
     } else {
-        assert(!"realloc failure");
+        Assert(!"realloc failure");
     }
     putInPart(big, 0, big->size - 1);
 }
@@ -91,7 +91,7 @@ internal void printBigint(bigint *big)
 {
     printf("bigint: " LONG, getPart(big, (big->size) - 1 ));
 
-    for(int32 i = big->size - 2;
+    for(s32 i = big->size - 2;
         i >= 0;
         --i)
     {
@@ -101,16 +101,16 @@ internal void printBigint(bigint *big)
     printf("\n");
 }
 
-internal void addWithOverflow(bigint *result, uint64 x, uint64 y)
+internal void addWithOverflow(bigint *result, u64 x, u64 y)
 {
-    assert (result->size == 2);
+    Assert (result->size == 2);
 
-    uint64 low, high = 0;
-    uint64 uintmaxDiff = UINT64_MAX - x;
+    u64 low, high = 0;
+    u64 uintmaxDiff = UINT64_MAX - x;
 
     if( uintmaxDiff < y)
     {
-        static const uint64 maxDiff = UINT64_MAX - lowMax;
+        static const u64 maxDiff = UINT64_MAX - lowMax;
         low = x + y + maxDiff;
         high = 1;
     } else {
@@ -131,7 +131,7 @@ global bigint globalPartResult;
 internal void init()
 {
     globalPartResult.size = 2;
-    globalPartResult.parts = malloc(sizeof(uint64) * 2);
+    globalPartResult.parts = malloc(sizeof(u64) * 2);
 }
 
 internal void addTo(bigint *x, bigint *y)
@@ -146,8 +146,8 @@ internal void addTo(bigint *x, bigint *y)
         smaller = y;
     }
     
-    int32 part = 0;
-    int32 smallerSize = smaller->size;
+    s32 part = 0;
+    s32 smallerSize = smaller->size;
     
     while (part < smallerSize)
     {

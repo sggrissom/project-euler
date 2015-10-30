@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../sgg/sgg.h"
+#include "slib.h"
 
 #ifndef WIN32
 #define LONG "%lld"
@@ -10,55 +10,91 @@
 #define LONG "%I64u"
 #endif
 
-internal u32
-sg_atoi(const char *s)
-{
-    u32 result;
+#define AbundantNumberLimit 28123
 
-    while(*s)
+internal u32
+SumOfDivisors(u32 Number)
+{
+    u32 Sum = 0;
+
+    for(u32 PotentialDivisor = 1;
+        PotentialDivisor <= (u32)(Number/2);
+        ++PotentialDivisor)
     {
-        result <<= 1;
-        result += (result << 2);
-        result += (*s++ & 0x0f);
+        if((Number % PotentialDivisor) == 0)
+        {
+            Sum += PotentialDivisor;
+        }
     }
 
-    return result;
-}
-
-internal u32
-CharValue(char character)
-{
-    return character - 'a' + 1;
-}
-
-internal u32
-GetStringValue(const char *str)
-{
-    u32 sum = 0;
-    
-    while(*str)
-    {
-        sum += CharValue(*str++);
-    }
-
-    return sum;
+    return Sum;
 }
 
 internal b32
-IsStringLower(char *a, char *b)
+IsAbundant(u32 Number)
+{
+    return (SumOfDivisors(Number) > Number);
+}
+
+typedef struct
+{
+    u32 *List;
+    u32 Length;
+} abundant_number_list;
+
+
+internal void
+PopulateAbundantNumberList(abundant_number_list *AbundantNumberList)
+{
+    u32 *List = 0;
+    
+    for(u32 PotentialAbundantNumber = 1;
+        PotentialAbundantNumber < AbundantNumberLimit;
+        ++PotentialAbundantNumber)
+    {
+        if(IsAbundant(PotentialAbundantNumber))
+        {
+            buffer_push(List, PotentialAbundantNumber);
+        }
+    }
+
+    AbundantNumberList->List = List;
+    AbundantNumberList->Length = buffer_count(List);
+}
+
+internal b32
+IsSumOfAbundantNumbers(u32 Number)
 {
     b32 Result = 0;
 
-    char CharA = *a++;
-    char CharB = *b++;
-
-    while(CharA == CharB)
+    if(!IsAbundant(Number))
     {
-        CharA = *a++;
-        CharB = *b++;
-    }
+        for(u32 i = 1;
+            i <= Number;
+            ++i)
+        {
+            if(IsAbundant(Number))
+            {
+                u32 Leftover = Number % i;
+                b32 NoneLeft = 0;
+                if(Leftover)
+                {
+                    NoneLeft = IsSumOfAbundantNumbers(Leftover) == 1;
+                }
+                else
+                {
+                    NoneLeft = 1;
+                }
 
-    if(CharB && CharB < CharA)
+                if(NoneLeft)
+                {
+                    Result = 1;
+                    break;
+                }
+            }
+        }
+    }
+    else
     {
         Result = 1;
     }
@@ -66,31 +102,23 @@ IsStringLower(char *a, char *b)
     return Result;
 }
 
-internal void
-SlowSortStrings(char **StringArray, u32 ArraySize)
+internal u32
+SumOfAllNumbersNotMadeUpOfAbundantNumbers()
 {
-    for(u32 SortedNumber = 0;
-        SortedNumber < ArraySize;
-        ++SortedNumber)
+    u32 Sum = 0;
+
+    for(u32 PossibleNumber = 1;
+        PossibleNumber <= AbundantNumberLimit;
+        ++PossibleNumber)
     {
-        char *MinString = *(StringArray + SortedNumber);
-        u32 MinStringIndex = SortedNumber;
-        for(u32 SearchIndex = SortedNumber + 1;
-            SearchIndex < ArraySize;
-            ++SearchIndex)
+        printf("%d\n", PossibleNumber);
+        if(!IsSumOfAbundantNumbers(PossibleNumber))
         {
-            if(IsStringLower(MinString, *(StringArray + SearchIndex)))
-            {
-                MinString = *(StringArray + SearchIndex);
-                MinStringIndex = SearchIndex;
-            }
-
+            Sum += PossibleNumber;
         }
-
-        char *temp = *(StringArray + SortedNumber);
-        *(StringArray + SortedNumber) = MinString;
-        *(StringArray + MinStringIndex) = temp;
     }
+    
+    return Sum;
 }
 
 s32 main(s32 argc, char *argv[])
@@ -104,44 +132,17 @@ s32 main(s32 argc, char *argv[])
         y = argv[2];
     }
 
-    printf("open\n"); 
-    FILE *file = fopen("names.txt", "r");
+    abundant_number_list AbundantNumberList = {0};
 
-    char *str = 0;
-    char **strings = 0;
+    PopulateAbundantNumberList(&AbundantNumberList);
 
-    if(file)
+    printf("%d\n", AbundantNumberList.Length);
+    for(u32 i = AbundantNumberList.Length - 5;
+        i < AbundantNumberList.Length;
+        ++i)
     {
-        char character = fgetc(file);
-    
-        while(character != EOF)
-        {
-            while(character != '\"' && character != ',')
-            {
-                buffer_push(str, character);
-                character = fgetc(file);
-            }
-            if(str)
-            {
-                buffer_push(str, '\0');
-                buffer_push(strings, str);
-                str = 0;
-            }
-            character = fgetc(file);
-        }
-
-        fclose(file);
-
+        printf("a%d: %d\n", i, AbundantNumberList.List[i]);
     }
 
-    SlowSortStrings(strings, buffer_count(strings));
-    
-    for(u32 StringIndex = 0;
-        StringIndex < buffer_count(strings);
-        ++StringIndex)
-    {
-        printf("%s\n", strings[StringIndex]);
-    }
-    
     return 0;
 }

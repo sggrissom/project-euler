@@ -35,50 +35,6 @@
 
 #include "solutions\bignum.c"
 
-u64 properDivisorSum(u64 num)
-{
-    u64 half = num/2 + 1;
-    u64 sum = 0;
-
-    for(u64 idx = 1;
-        idx < half;
-        ++idx)
-    {
-        if(num % idx == 0) sum += idx;
-    }
-
-    return sum;
-}
-
-internal u64
-blah(u64 x)
-{
-    u64 result = 0;
-    
-    u64 divSum = properDivisorSum(x);
-    if(divSum != x && x == properDivisorSum(divSum))
-    {
-        result = x;
-    }
-
-    return result;
-}
-
-internal u64
-amicableSumUpTo(u32 limit)
-{
-    u64 sum = 0;
-
-    for(u32 idx = 1;
-        idx <= limit;
-        ++idx)
-    {
-        sum += blah(idx);
-    }
-
-    return sum;
-}
-
 s32 main(int32 argc, char *argv[])
 {
     int32 x = 5, y = 1;
@@ -90,8 +46,15 @@ s32 main(int32 argc, char *argv[])
         y = atoi(argv[2]);
     }
 
+    init();
+    
+    bigint num;
 
-    printf( LONG "\n", amicableSumUpTo(x));
+    createBigint(&num, 1);
+    bignumFactorial(&num, x);
+    printBigint(&num);
+
+    printf( LONG "\n", sumBigDigits(&num));
 
     return 0;
 }

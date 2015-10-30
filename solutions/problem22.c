@@ -13,7 +13,7 @@
 internal u32
 sg_atoi(const char *s)
 {
-    u32 result;
+    u32 result = 0;
 
     while(*s)
     {
@@ -28,7 +28,11 @@ sg_atoi(const char *s)
 internal u32
 CharValue(char character)
 {
-    return character - 'a' + 1;
+    u32 Result = character - 'A' + 1;
+
+    Assert(Result > 0 & Result <= 26);
+
+    return Result;
 }
 
 internal u32
@@ -58,10 +62,12 @@ IsStringLower(char *a, char *b)
         CharB = *b++;
     }
 
-    if(CharB && CharB < CharA)
+    if(CharB == ' ' || CharB < CharA)
     {
         Result = 1;
     }
+
+    //printf("%c -- %c -- %d\n", CharA, CharB, Result);
 
     return Result;
 }
@@ -104,7 +110,6 @@ s32 main(s32 argc, char *argv[])
         y = argv[2];
     }
 
-    printf("open\n"); 
     FILE *file = fopen("names.txt", "r");
 
     char *str = 0;
@@ -116,7 +121,7 @@ s32 main(s32 argc, char *argv[])
     
         while(character != EOF)
         {
-            while(character != '\"' && character != ',')
+            while(character >= 'A' && character <= 'Z')
             {
                 buffer_push(str, character);
                 character = fgetc(file);
@@ -129,19 +134,26 @@ s32 main(s32 argc, char *argv[])
             }
             character = fgetc(file);
         }
-
+        
         fclose(file);
 
     }
-
-    SlowSortStrings(strings, buffer_count(strings));
     
+    SlowSortStrings(strings, buffer_count(strings));
+
+    u64 Total = 0;
+
     for(u32 StringIndex = 0;
         StringIndex < buffer_count(strings);
         ++StringIndex)
     {
-        printf("%s\n", strings[StringIndex]);
+        u64 Score = GetStringValue(strings[StringIndex]) * (StringIndex + 1);
+        Total += Score;
+
+//        printf("name: %s -- score: "LONG"\n", strings[StringIndex], Score);
     }
-    
+
+    printf(LONG "\n", Total);
+
     return 0;
 }

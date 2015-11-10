@@ -1,14 +1,15 @@
 @echo off
 
-set ignoredWarnings= -wd4505 -wd4201 -wd4100 -wd4101
-set debugCompilerFlags= -MTd -nologo -GR- -EHa- -Od -Oi -WX -W4 %ignoredWarnings% -FC -Z7 -DWIN32=1 -DDEGUG=1
-set releaseCompilerFlags= -MTd -nologo -GR- -EHa- -O2 -Oi -WX -W4 %ignoredWarnings% -FC -DWIN32=1
-
-IF NOT EXIST bin mkdir bin
+if not exist bin mkdir bin
 pushd bin
 
-del *.pdb > NUL 2> NUL
-cl %debugCompilerFlags% ../problem.c /link -incremental:no /OUT:debug.exe
-cl %releaseCompilerFlags% ../problem.c /link -incremental:no /OUT:release.exe
+//4505: unreference function
+set IgnoredWarnings= -wd4505
+set Defines= -DSLOW -DWIN32 -DDEBUG
+set CompilerFlags= -MT -nologo -GR- -EHa- -O2 -Oi -WX -W4 -FC %IgnoredWarnings% %Defines%
+
+cl %CompilerFlags% ../problem.c /link -incremental:no
 
 popd
+
+rem set ignoredWarnings= -wd4505 -wd4201 -wd4100 -wd4101

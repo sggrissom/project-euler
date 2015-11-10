@@ -3,7 +3,7 @@
 pushd bin
 
 echo -------------------------
-debug.exe
+problem.exe
 echo -------------------------
 
 popd

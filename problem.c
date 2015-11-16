@@ -15,7 +15,7 @@ Factorial(u32 X)
 {
     u32 Result = 1;
 
-    for(u3 i = 2;
+    for(u32 i = 2;
         i <= X;
         ++i)
     {
@@ -26,36 +26,80 @@ Factorial(u32 X)
 }
 
 internal u32
-GetPermutations(u32 PermutationNumber, u32 Size)
+GetNumberOfDigits(u32 Number)
+{
+    u32 DigitCount = 0;
+
+    while(Number > 0)
+    {
+        Number /= 10;
+        ++DigitCount;
+    }
+
+    return DigitCount;
+}
+
+internal u32
+GetDigit(u32 Number, u32 Digit)
+{
+    u32 UpperMask = (u32)pow(10, Digit+1);
+    u32 LowerMask = (u32)pow(10, Digit);
+    return (Number % (UpperMask)) / LowerMask;
+}
+
+internal u32
+UpdateDigits(u32 FirstDigit, u32 OtherDigits)
+{
+    u32 UpdatedNumber = OtherDigits;
+    u32 DigitCount = GetNumberOfDigits(OtherDigits);
+
+    for(u32 DigitIndex = 0;
+        DigitIndex < DigitCount;
+        ++DigitIndex)
+    {
+        u32 Digit = GetDigit(OtherDigits, DigitIndex);
+        if(Digit >= FirstDigit)
+        {
+            UpdatedNumber += (u32)pow(10, DigitIndex);
+        }
+    }
+
+    UpdatedNumber += FirstDigit * (u32)pow(10, DigitCount);
+
+    return UpdatedNumber;
+}
+
+internal u32
+GetPermutation(u32 PermutationNumber, u32 Size)
 {
     u32 Result = 0;
-
-    u32 *Numbers = (u32 *)malloc(Size * sizeof(u32));
-
-    for(u32 i = 0;
-        i < Size;
-        ++i)
-    {
-        Numbers[i] = i;
-    }
-
     u32 PermutationCount = Factorial(Size);
-    u32 *Permutations = (u32 *)malloc(Size * sizeof(u32));
-
-    u32 index = 0;
-
-    for(u32 i = 0;
-        i < Size;
-        ++i)
+    if(PermutationNumber < PermutationCount)
     {
+        u32 FirstDigit = (PermutationNumber)/(PermutationCount - 1);
+        if(Size == 2)
+        {
+            //Second digit is either 0 or 1, the opposite of the first digit. So XOR.
+            u32 SecondDigit = FirstDigit ^ 1;
+
+             //Should result in 10 or 01;
+            Result = FirstDigit * 10 + SecondDigit;
+        }
+        else
+        {
+            u32 OtherDigits = GetPermutation(PermutationNumber %
+                                             (PermutationCount - 1),
+                                             Size - 1);
+            Result = UpdateDigits(FirstDigit, OtherDigits);
+        }
     }
-    
+
     return Result;
 }
 
 s32 main(s32 argc, char *argv[])
 {
-    char *cx = "5", *cy = "3";
+    char *cx = "1", *cy = "2";
     if (argc == 2)
     {
         cx = argv[1];
@@ -67,7 +111,7 @@ s32 main(s32 argc, char *argv[])
     u32 x = sg_atoi(cx);
     u32 y = sg_atoi(cy);
 
-    printf("%d\n", GetLexigraphicPermutation(x, y));
+    printf("%d\n", GetPermutation(x, y));
 
     return 0;
 }

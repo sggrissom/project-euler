@@ -6,7 +6,7 @@ pushd bin
 //4505: unreference function
 set IgnoredWarnings= -wd4505
 set Defines= -DSLOW -DWIN32 -DDEBUG
-set CompilerFlags= -MT -nologo -GR- -EHa- -O2 -Oi -WX -W4 -FC %IgnoredWarnings% %Defines%
+set CompilerFlags= -MT -Zi -nologo -GR- -EHa- -Od -Oi -WX -W4 -FC %IgnoredWarnings% %Defines%
 
 cl %CompilerFlags% ../problem.c /link -incremental:no
 

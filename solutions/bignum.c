@@ -1,4 +1,16 @@
 
+/*
+  Use:
+
+  bigint num;
+  CreateBigint(&num, 1);
+
+  Do Something...
+  
+  PrintBigint(&num);
+  
+ */
+
 #define maxDigits 19
 #define intDigits 50
 #define ZEROLONG "%019I64u"
@@ -9,23 +21,26 @@ typedef struct {
     u64 *parts;
 } bigint;
 
-internal void putInPart(bigint *big, uint64 num, int32 idx)
+internal void
+PutInPart(bigint *big, u64 num, s32 idx)
 {
-    assert(idx < big->size && idx >= 0);
+    Assert((u32)idx < big->size && idx >= 0);
     *(big->parts + idx) = num;
 }
 
-internal uint64 getPart(bigint *big, int32 idx)
+internal u64
+GetPart(bigint *big, s32 idx)
 {
-    assert(idx < big->size && idx >= 0);
+    Assert((u32)idx < big->size && idx >= 0);
     return *(big->parts + idx);
 }
 
-internal int64 getInt(char* s, int32 digits)
+internal s64
+GetInt(char* s, s32 digits)
 {
     char* buffer = malloc(sizeof(char) * (digits + 1));
     char* temp = buffer;
-    bool32 began = 0;
+    b32 began = 0;
     for (int i = 0;
          i<digits;
          ++i)
@@ -47,82 +62,86 @@ internal int64 getInt(char* s, int32 digits)
     }
     *temp = '\0';
 
-    int64 result = strtoull(buffer, 0, 10);
+    s64 result = strtoull(buffer, 0, 10);
 
     free(buffer);
     
     return result;
 }
 
-internal void createBigintFromString(bigint* big, char* string)
+internal void
+CreateBigintFromString(bigint* big, char* string)
 {
-    int32 digits = intDigits - 2*maxDigits;
-    putInPart(big, getInt(string, digits), 2);
-    putInPart(big, getInt(string + digits, maxDigits), 1);
-    putInPart(big, getInt(string + digits + maxDigits, maxDigits), 0);
+    s32 digits = intDigits - 2*maxDigits;
+    PutInPart(big, GetInt(string, digits), 2);
+    PutInPart(big, GetInt(string + digits, maxDigits), 1);
+    PutInPart(big, GetInt(string + digits + maxDigits, maxDigits), 0);
 }
 
-internal void createBigint(bigint *big, uint64 num)
+internal void
+CreateBigint(bigint *big, u64 num)
 {
     big->size = 1;
-    big->parts = malloc(sizeof(uint64) * big->size);
-    putInPart(big, num, 0);
+    big->parts = malloc(sizeof(u64) * big->size);
+    PutInPart(big, num, 0);
 }
 
-internal void expandBigint(bigint *big)
+internal void
+ExpandBigint(bigint *big)
 {
     ++(big->size);
-    uint64 *temp = realloc(big->parts, sizeof(uint64) * big->size);
+    u64 *temp = realloc(big->parts, sizeof(u64) * big->size);
     if(temp)
     {
         big->parts = temp;
     } else {
-        assert(!"realloc failure");
+        Assert(!"realloc failure");
     }
-    putInPart(big, 0, big->size - 1);
+    PutInPart(big, 0, big->size - 1);
 }
 
-internal void deleteBigint(bigint *big)
+internal void
+DeleteBigint(bigint *big)
 {
     free(big->parts);
 }
 
 internal void
-copyBigint(bigint *original, bigint *copy)
+CopyBigint(bigint *original, bigint *copy)
 {
     for(u32 idx = 0;
         idx < original->size;
         ++idx)
     {
-        expandBigint(copy);
-        putInPart(copy, getPart(original, idx), idx);
+        ExpandBigint(copy);
+        PutInPart(copy, GetPart(original, idx), idx);
     }
 }
 
-internal void printBigint(bigint *big)
+internal void
+PrintBigint(bigint *big)
 {
-    printf("bigint: " LONG, getPart(big, (big->size) - 1 ));
+    printf("bigint: " LONG, GetPart(big, (big->size) - 1 ));
 
-    for(int32 i = big->size - 2;
+    for(s32 i = big->size - 2;
         i >= 0;
         --i)
     {
-        printf(ZEROLONG, getPart(big, i));
+        printf(ZEROLONG, GetPart(big, i));
     }
 
     printf("\n");
 }
 
-internal void addWithOverflow(bigint *result, uint64 x, uint64 y)
+internal void
+AddWithOverflow(bigint *result, u64 x, u64 y)
 {
-    assert (result->size == 2);
-
-    uint64 low, high = 0;
-    uint64 uintmaxDiff = UINT64_MAX - x;
+    u64 low, high = 0;
+    u64 uintmaxDiff = UINT64_MAX - x;
 
     if( uintmaxDiff < y)
     {
-        static const uint64 maxDiff = UINT64_MAX - lowMax;
+        static const u64 maxDiff = UINT64_MAX - lowMax;
         low = x + y + maxDiff;
         high = 1;
     } else {
@@ -135,54 +154,56 @@ internal void addWithOverflow(bigint *result, uint64 x, uint64 y)
         low -= lowMax + 1;
     }
 
-    putInPart(result, low, 0);
-    putInPart(result, high, 1);
+    PutInPart(result, low, 0);
+    PutInPart(result, high, 1);
 }
 
 global bigint globalPartResult;
-internal void init()
+internal void
+init()
 {
     globalPartResult.size = 2;
-    globalPartResult.parts = malloc(sizeof(uint64) * 2);
+    globalPartResult.parts = malloc(sizeof(u64) * 2);
 }
 
-internal void addTo(bigint *bigger, bigint *smaller)
+internal void
+AddTo(bigint *bigger, bigint *smaller)
 {
-    int32 part = 0;
-    int32 smallerSize = smaller->size;
+    s32 part = 0;
+    s32 smallerSize = smaller->size;
 
-    int64 nextSmallerPart = getPart(smaller, part);
+    s64 nextSmallerPart = GetPart(smaller, part);
     
     while (part < smallerSize)
     {
-        addWithOverflow(&globalPartResult, getPart(bigger, part), nextSmallerPart);
-        putInPart(bigger,
-                  getPart(&globalPartResult,0),
+        AddWithOverflow(&globalPartResult, GetPart(bigger, part), nextSmallerPart);
+        PutInPart(bigger,
+                  GetPart(&globalPartResult,0),
                   part++);
 
 
-        nextSmallerPart = getPart(smaller, part);
+        nextSmallerPart = GetPart(smaller, part);
 
         u32 partLevel = part;
-        while(getPart(&globalPartResult, 1))
+        while(GetPart(&globalPartResult, 1))
         {
             if (partLevel == bigger->size)
             {
-                expandBigint(bigger);
+                ExpandBigint(bigger);
 
-                putInPart(bigger,
-                          getPart(&globalPartResult,1),
+                PutInPart(bigger,
+                          GetPart(&globalPartResult,1),
                           partLevel++);
 
-                putInPart(&globalPartResult, 0, 1);
+                PutInPart(&globalPartResult, 0, 1);
 
             } else {
-                addWithOverflow(&globalPartResult,
-                                getPart(&globalPartResult, 1),
-                                getPart(bigger, partLevel));
+                AddWithOverflow(&globalPartResult,
+                                GetPart(&globalPartResult, 1),
+                                GetPart(bigger, partLevel));
 
-                putInPart(bigger,
-                          getPart(&globalPartResult,0),
+                PutInPart(bigger,
+                          GetPart(&globalPartResult,0),
                           partLevel++);
 
             }
@@ -198,18 +219,18 @@ mult(bigint *big, u32 num)
     multBig->size = 0;
     multBig->parts = 0;
 
-    copyBigint(big, multBig);
+    CopyBigint(big, multBig);
         
     for(u32 idx = 0;
         idx < num-1;
         ++idx)
     {
-        addTo(big, multBig);
+        AddTo(big, multBig);
     }
 }
 
 internal u64
-sumDigits(u64 num)
+SumDigits(u64 num)
 {
     u64 sum = 0;
 
@@ -222,8 +243,22 @@ sumDigits(u64 num)
     return sum;
 }
 
+internal u32
+GetNumberOfDigits(u64 Number)
+{
+    u32 DigitCount = 0;
+
+    while(Number > 0)
+    {
+        Number /= 10;
+        ++DigitCount;
+    }
+
+    return DigitCount;
+}
+
 internal u64
-sumBigDigits(bigint *num)
+SumBigDigits(bigint *num)
 {
     u64 sum = 0;
 
@@ -231,14 +266,14 @@ sumBigDigits(bigint *num)
         idx < num->size;
         ++idx)
     {
-        sum += sumDigits(getPart(num, idx));
+        sum += SumDigits(GetPart(num, idx));
     }
 
     return sum;
 }
 
 internal void
-bignumFactorial(bigint *big, u32 factorialNumber)
+BignumFactorial(bigint *big, u32 factorialNumber)
 {
     for(u32 idx = 1;
         idx < factorialNumber + 1;
@@ -246,4 +281,19 @@ bignumFactorial(bigint *big, u32 factorialNumber)
     {
         mult(big,idx);
     }
+}
+
+internal u32
+GetBignumDigits(bigint *big)
+{
+    u32 digits = 0;
+    
+    for(u32 idx = 0;
+        idx < big->size;
+        ++idx)
+    {
+        digits += GetNumberOfDigits(GetPart(big, idx));
+    }
+
+    return digits;
 }

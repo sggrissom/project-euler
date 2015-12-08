@@ -2,106 +2,44 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "slib.h"
+#include <slib.h>
+#include "solutions/bignum.c"
 
-#ifndef WIN32
-#define LONG "%lld"
-#else
-#define LONG "%I64u"
-#endif
-
-internal u32
-Factorial(u32 X)
+internal void
+GetNextFibonacci(bigint *f1, bigint *f2)
 {
-    u32 Result = 1;
-
-    for(u32 i = 2;
-        i <= X;
-        ++i)
-    {
-        Result *= i;
-    }
-
-    return Result;
+    bigint fTemp;
+    CreateBigint(&fTemp, 0);
+    CopyBigint(f1, &fTemp);
+    AddTo(f1, f2);
+    DeleteBigint(f2);
+    CopyBigint(&fTemp, f2);
+    DeleteBigint(&fTemp);
 }
 
 internal u32
-GetNumberOfDigits(u32 Number)
+GetDigitsInFibNumber(u32 Fn)
 {
-    u32 DigitCount = 0;
-
-    while(Number > 0)
+    bigint num1, num2;
+    CreateBigint(&num1, 1);
+    CreateBigint(&num2, 1);
+    
+    for(u32 FibNumber = 3;
+        FibNumber < Fn;
+        ++FibNumber)
     {
-        Number /= 10;
-        ++DigitCount;
+        GetNextFibonacci(&num1, &num2);
     }
 
-    return DigitCount;
-}
+    GetNextFibonacci(&num1, &num2);
+    PrintBigint(&num1);
 
-internal u32
-GetDigit(u32 Number, u32 Digit)
-{
-    u32 UpperMask = (u32)pow(10, Digit+1);
-    u32 LowerMask = (u32)pow(10, Digit);
-    return (Number % (UpperMask)) / LowerMask;
-}
-
-internal u32
-UpdateDigits(u32 FirstDigit, u32 OtherDigits, u32 Size)
-{
-    u32 UpdatedNumber = OtherDigits;
-    u32 DigitCount = Size - 1;
-
-    for(u32 DigitIndex = 0;
-        DigitIndex < DigitCount;
-        ++DigitIndex)
-    {
-        u32 Digit = GetDigit(OtherDigits, DigitIndex);
-        if(Digit >= FirstDigit)
-        {
-            UpdatedNumber += (u32)pow(10, DigitIndex);
-        }
-    }
-
-    UpdatedNumber += FirstDigit * (u32)pow(10, DigitCount);
-
-    return UpdatedNumber;
-}
-
-internal u32
-GetPermutation(u32 PermutationNumber, u32 Size)
-{
-    u32 Result = 0;
-    u32 PermutationCount = Factorial(Size);
-    u32 SplitPoint = PermutationCount / Size;
-    if(PermutationNumber < PermutationCount)
-    {
-        u32 FirstDigit = (PermutationNumber)/(SplitPoint);
-        if(Size == 2)
-        {
-            //Second digit is either 0 or 1, the opposite of the first digit. So XOR.
-            u32 SecondDigit = FirstDigit ^ 1;
-
-             //Should result in 10 or 01;
-            Result = FirstDigit * 10 + SecondDigit;
-        }
-        else
-        {
-            u32 OtherDigits = GetPermutation(PermutationNumber %
-                                             (SplitPoint),
-                                             Size - 1);
-            
-            Result = UpdateDigits(FirstDigit, OtherDigits, Size);
-        }
-    }
-
-    return Result;
+    return GetBignumDigits(&num1);
 }
 
 s32 main(s32 argc, char *argv[])
 {
-    char *cx = "10", *cy = "999999";
+    char *cx = "5", *cy = "1";
     if (argc == 2)
     {
         cx = argv[1];
@@ -113,7 +51,9 @@ s32 main(s32 argc, char *argv[])
     u32 x = sg_atoi(cx);
     u32 y = sg_atoi(cy);
 
-    printf("%010u\n", GetPermutation(y, x));
+    init();
+
+    printf("%d\n", GetDigitsInFibNumber(x));
 
     return 0;
 }
